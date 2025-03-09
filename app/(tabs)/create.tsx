@@ -7,7 +7,7 @@ import { Camera, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useAuth } from '../../context/AuthContext';
+
 
 const postSchema = yup.object().shape({
   caption: yup.string().required('Caption is required'),
@@ -20,7 +20,7 @@ type PostFormData = {
 };
 
 export default function CreatePostScreen() {
-  const { user } = useAuth();
+
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 

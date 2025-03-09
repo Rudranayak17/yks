@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { X, Camera, Calendar, Instagram, Twitter, Facebook, Linkedin } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../context/AuthContext';
+
 
 const profileSchema = yup.object().shape({
   name: yup.string().required('Name is required'),
@@ -64,7 +64,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   onClose,
   userData,
 }) => {
-  const { updateProfile } = useAuth();
+
   const [profileImage, setProfileImage] = useState<string | null>(userData?.profilePicture || null);
   const [showBirthdatePicker, setShowBirthdatePicker] = useState(false);
   const [showAnniversaryPicker, setShowAnniversaryPicker] = useState(false);
@@ -97,19 +97,19 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   };
 
   const onSubmit = (data: ProfileFormData) => {
-    updateProfile({
-      name: data.name,
-      bio: data.bio,
-      profilePicture: profileImage,
-      birthdate,
-      anniversary,
-      socialLinks: {
-        instagram: data.instagram,
-        twitter: data.twitter,
-        facebook: data.facebook,
-        linkedin: data.linkedin,
-      },
-    });
+    // updateProfile({
+    //   name: data.name,
+    //   bio: data.bio,
+    //   profilePicture: profileImage,
+    //   birthdate,
+    //   anniversary,
+    //   socialLinks: {
+    //     instagram: data.instagram,
+    //     twitter: data.twitter,
+    //     facebook: data.facebook,
+    //     linkedin: data.linkedin,
+    //   },
+    // });
     onClose();
   };
 

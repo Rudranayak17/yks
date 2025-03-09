@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
-import { useAuth } from '../../context/AuthContext';
+
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useLoginMutation } from '@/store/api/auth';
+import { showToast } from '@/utils/ShowToast';
 
 const loginSchema = yup.object().shape({
-  email: yup.string().email('Please enter a valid email').required('Email is required'),
-  password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+  email: yup
+    .string()
+    .email('Please enter a valid email')
+    .required('Email is required'),
+  password: yup
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
 });
 
 type LoginFormData = {
@@ -21,9 +39,13 @@ type LoginFormData = {
 export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const [login] = useLoginMutation();
+  const router = useRouter();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
     defaultValues: {
       email: '',
@@ -34,7 +56,18 @@ export default function LoginScreen() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
-      await login(data.email, data.password);
+      const resp = await login({
+        email: data.email,
+        password: data.password,
+      }).unwrap();
+      if (resp?.success === true) {
+        showToast({
+          message: resp.message,
+          backgroundColor: 'green',
+        });
+        resp.user.role === 'admin' && router.navigate('/(tabs)/admin');
+      }
+      console.log(resp);
     } catch (error) {
       console.error(error);
     } finally {
@@ -52,13 +85,19 @@ export default function LoginScreen() {
           <Animated.View entering={FadeInDown.delay(100).duration(1000)}>
             <Text style={styles.logo}>YKS</Text>
           </Animated.View>
-          
-          <Animated.View entering={FadeInDown.delay(200).duration(1000)} style={styles.headerContainer}>
+
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(1000)}
+            style={styles.headerContainer}
+          >
             <Text style={styles.header}>Welcome Back</Text>
             <Text style={styles.subHeader}>Sign in to continue</Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(300).duration(1000)} style={styles.formContainer}>
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(1000)}
+            style={styles.formContainer}
+          >
             <Controller
               control={control}
               name="email"
@@ -79,7 +118,9 @@ export default function LoginScreen() {
                 </View>
               )}
             />
-            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email.message}</Text>
+            )}
 
             <Controller
               control={control}
@@ -110,7 +151,9 @@ export default function LoginScreen() {
                 </View>
               )}
             />
-            {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password.message}</Text>
+            )}
 
             <TouchableOpacity style={styles.forgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
@@ -129,7 +172,10 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(400).duration(1000)} style={styles.footer}>
+          <Animated.View
+            entering={FadeInDown.delay(400).duration(1000)}
+            style={styles.footer}
+          >
             <Text style={styles.footerText}>Don't have an account? </Text>
             <Link href="/(auth)/signup" asChild>
               <TouchableOpacity>

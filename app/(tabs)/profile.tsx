@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, Dimensions }
 import { Settings, Grid2x2 as Grid, Bookmark, CreditCard as Edit3 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useAuth } from '../../context/AuthContext';
+
 import { ProfileEditModal } from '../../components/ProfileEditModal';
 
 const { width } = Dimensions.get('window');
@@ -50,7 +50,7 @@ const USER_POSTS = [
 ];
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+;
   const [activeTab, setActiveTab] = useState('posts');
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
@@ -78,7 +78,7 @@ export default function ProfileScreen() {
       <Animated.View entering={FadeIn.duration(500)} style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Image 
-            source={{ uri: user?.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1760&q=80' }} 
+            source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1760&q=80' }} 
             style={styles.profileImage} 
           />
           <TouchableOpacity 
@@ -89,8 +89,8 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.userName}>{user?.name || 'User Name'}</Text>
-        <Text style={styles.userBio}>{user?.bio || 'No bio yet'}</Text>
+        <Text style={styles.userName}>{'User Name'}</Text>
+        <Text style={styles.userBio}>{'No bio yet'}</Text>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
@@ -130,7 +130,7 @@ export default function ProfileScreen() {
   );
 
   const renderFooter = () => (
-    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+    <TouchableOpacity style={styles.logoutButton} onPress={()=>console.log("logout")}>
       <Text style={styles.logoutButtonText}>Logout</Text>
     </TouchableOpacity>
   );
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
       <ProfileEditModal 
         isVisible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
-        userData={user}
+        userData={[]}
       />
     </View>
   );

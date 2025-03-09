@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Heart, MessageCircle, Share2, MoveHorizontal as MoreHorizontal, Bookmark, Send, ThumbsUp } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useAuth } from '../../context/AuthContext';
+
 import { CommentBottomSheet } from '../../components/CommentBottomSheet';
 
 const { width } = Dimensions.get('window');
@@ -99,7 +99,7 @@ const COMMENTS = [
 ];
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [savedPosts, setSavedPosts] = useState<Record<string, boolean>>({});
   const [selectedPost, setSelectedPost] = useState<typeof POSTS[0] | null>(null);
@@ -130,7 +130,7 @@ export default function HomeScreen() {
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !user || !selectedPost) return;
+    if (!newComment.trim() ||  !selectedPost) return;
 
     setIsSubmitting(true);
     
@@ -140,9 +140,9 @@ export default function HomeScreen() {
     const newCommentObj = {
       id: `comment-${Date.now()}`,
       user: {
-        id: user.id,
-        name: user.name,
-        avatar: user.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1760&q=80',
+        id: 1,
+        name: "rudra",
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1760&q=80',
       },
       text: newComment.trim(),
       timestamp: 'Just now',
@@ -239,7 +239,7 @@ export default function HomeScreen() {
           onClose={() => setIsCommentsVisible(false)}
           post={selectedPost}
           comments={postComments}
-          user={user}
+          user={[]}
           newComment={newComment}
           setNewComment={setNewComment}
           isSubmitting={isSubmitting}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, TextInput } from 'react-native';
 import { Search, Plus } from 'lucide-react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
-import { useAuth } from '../../../context/AuthContext';
+
 import { router } from 'expo-router';
 
 // Mock data for chats
@@ -80,7 +80,7 @@ const CHATS = [
 ];
 
 export default function ChatScreen() {
-  const { user } = useAuth();
+
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredChats = CHATS.filter(chat => 

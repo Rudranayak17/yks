@@ -8,10 +8,12 @@ import Animated, {
   withSequence,
   runOnJS
 } from 'react-native-reanimated';
-import { useAuth } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentIsAuth } from '@/store/reducer/auth';
+
 
 export default function SplashScreen() {
-  const { isAuthenticated } = useAuth();
+const isAuthenticated=useSelector(selectCurrentIsAuth)
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 

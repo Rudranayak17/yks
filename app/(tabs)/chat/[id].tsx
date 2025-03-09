@@ -15,7 +15,7 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ArrowLeft, Send, Mic, Image as ImageIcon, Smile, Paperclip } from 'lucide-react-native';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
-import { useAuth } from '../../../context/AuthContext';
+
 
 const { width } = Dimensions.get('window');
 
@@ -187,7 +187,7 @@ const INITIAL_MESSAGES = {
 export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
+
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -207,7 +207,7 @@ export default function ChatDetailScreen() {
   }, [id]);
 
   const sendMessage = async () => {
-    if (!message.trim() || !user || !chatUser) return;
+    if (!message.trim()  || !chatUser) return;
 
     setIsSending(true);
     
@@ -215,7 +215,7 @@ export default function ChatDetailScreen() {
     const newMessage = {
       id: `msg-${Date.now()}`,
       text: message.trim(),
-      sender: user.id,
+      sender: 1,
       timestamp: 'Just now',
       status: 'sent',
     };
@@ -247,7 +247,7 @@ export default function ChatDetailScreen() {
   };
 
   const renderMessage = ({ item, index }: { item: any, index: number }) => {
-    const isUser = item.sender === user?.id;
+    const isUser = item.sender === 1;
     const showAvatar = !isUser && (index === 0 || messages[index - 1]?.sender !== item.sender);
     
     return (
