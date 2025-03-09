@@ -1,63 +1,74 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import { Settings, Grid2x2 as Grid, Bookmark, CreditCard as Edit3 } from 'lucide-react-native';
-import { router } from 'expo-router';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  Dimensions,
+} from 'react-native';
+import {
+  Settings,
+  Grid2x2 as Grid,
+  Bookmark,
+  CreditCard as Edit3,
+} from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/store/reducer/auth';
+import { useGet_postQuery } from '@/store/api/post';
+import { ProfileEditModal } from '../../../components/ProfileEditModal';
+import { useRouter } from 'expo-router'; // Import the router
 
-import { ProfileEditModal } from '../../components/ProfileEditModal';
+// Skeleton Loading Component
+const SkeletonPost = () => (
+  <View style={[styles.postItem, styles.skeletonPost]}>
+    <View style={styles.skeletonImage} />
+  </View>
+);
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width / 3;
 
-// Mock data for user posts
-const USER_POSTS = [
-  {
-    id: '1',
-    image: 'https://images.unsplash.com/photo-1682687982501-1e58ab814714?q=80&w=1974&auto=format&fit=crop',
-    likes: 120,
-    comments: 24,
-  },
-  {
-    id: '2',
-    image: 'https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=2070&auto=format&fit=crop',
-    likes: 85,
-    comments: 12,
-  },
-  {
-    id: '3',
-    image: 'https://images.unsplash.com/photo-1682695796954-bad0d0f59ff1?q=80&w=2070&auto=format&fit=crop',
-    likes: 210,
-    comments: 32,
-  },
-  {
-    id: '4',
-    image: 'https://images.unsplash.com/photo-1682686581484-a2d3e7a2bff7?q=80&w=2070&auto=format&fit=crop',
-    likes: 150,
-    comments: 18,
-  },
-  {
-    id: '5',
-    image: 'https://images.unsplash.com/photo-1682687220208-22d7a2543e88?q=80&w=2070&auto=format&fit=crop',
-    likes: 95,
-    comments: 8,
-  },
-  {
-    id: '6',
-    image: 'https://images.unsplash.com/photo-1682687220923-c58b9a4592ea?q=80&w=2070&auto=format&fit=crop',
-    likes: 180,
-    comments: 22,
-  },
-];
-
 export default function ProfileScreen() {
-;
   const [activeTab, setActiveTab] = useState('posts');
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const user = useSelector(selectCurrentUser);
+  const { data: postsData, isLoading } = useGet_postQuery({});
+  const router = useRouter(); // Initialize the router
+
+  // Transform API data to match required format
+  const USER_POSTS = postsData?.data?.map(post => ({
+    id: post._id,
+    image: post.imageUrl,
+  })) || [];
+
+  // Navigate to post detail page with post ID
+  const handlePostPress = (postId) => {
+    router.push(`/profile/${postId}`);
+  };
 
   const renderPost = ({ item }) => (
-    <TouchableOpacity style={styles.postItem}>
-      <Image source={{ uri: item.image }} style={styles.postImage} />
+    <TouchableOpacity 
+      style={styles.postItem}
+      onPress={() => handlePostPress(item.id)}
+    >
+      <Image 
+        source={{ uri: item.image }} 
+        style={styles.postImage}
+        resizeMode="cover"
+      />
     </TouchableOpacity>
+  );
+
+  const renderSkeletonGrid = () => (
+    <FlatList
+      data={Array(6).fill({})}
+      renderItem={SkeletonPost}
+      numColumns={3}
+      keyExtractor={(_, index) => `skeleton-${index}`}
+    />
   );
 
   const renderEmptyState = () => (
@@ -70,18 +81,24 @@ export default function ProfileScreen() {
   const renderHeader = () => (
     <>
       <View style={styles.header}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/settings')}>
           <Settings size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
-      <Animated.View entering={FadeIn.duration(500)} style={styles.profileSection}>
+      <Animated.View
+        entering={FadeIn.duration(500)}
+        style={styles.profileSection}
+      >
         <View style={styles.profileImageContainer}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1760&q=80' }} 
-            style={styles.profileImage} 
+          <Image
+            source={{
+              uri: user?.profile_URL || 'https://via.placeholder.com/100',
+            }}
+            style={styles.profileImage}
+            resizeMode="cover"
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editProfileButton}
             onPress={() => setIsEditModalVisible(true)}
           >
@@ -89,48 +106,52 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.userName}>{'User Name'}</Text>
-        <Text style={styles.userBio}>{'No bio yet'}</Text>
+        <Text style={styles.userName}>{user?.username || "No name"}</Text>
+        <Text style={styles.userBio}>{user?.bio || 'No bio yet'}</Text>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{USER_POSTS.length}</Text>
             <Text style={styles.statLabel}>Posts</Text>
           </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>1.2K</Text>
-            <Text style={styles.statLabel}>Followers</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>350</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </View>
         </View>
 
-        <TouchableOpacity style={styles.editButton} onPress={() => setIsEditModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => setIsEditModalVisible(true)}
+        >
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
       </Animated.View>
 
       <View style={styles.tabsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'posts' && styles.activeTab]}
           onPress={() => setActiveTab('posts')}
         >
           <Grid size={24} color={activeTab === 'posts' ? '#5271FF' : '#999'} />
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
           onPress={() => setActiveTab('saved')}
         >
-          <Bookmark size={24} color={activeTab === 'saved' ? '#5271FF' : '#999'} />
+          <Bookmark
+            size={24}
+            color={activeTab === 'saved' ? '#5271FF' : '#999'}
+          />
         </TouchableOpacity>
       </View>
     </>
   );
 
   const renderFooter = () => (
-    <TouchableOpacity style={styles.logoutButton} onPress={()=>console.log("logout")}>
+    <TouchableOpacity
+      style={styles.logoutButton}
+      onPress={() => {
+        console.log('logout');
+        router.push('/login');
+      }}
+    >
       <Text style={styles.logoutButtonText}>Logout</Text>
     </TouchableOpacity>
   );
@@ -140,19 +161,29 @@ export default function ProfileScreen() {
       <FlatList
         data={activeTab === 'posts' ? USER_POSTS : []}
         renderItem={renderPost}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         numColumns={3}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
-        ListEmptyComponent={activeTab === 'saved' ? renderEmptyState : null}
+        ListEmptyComponent={
+          activeTab === 'saved'
+            ? renderEmptyState
+            : isLoading
+            ? renderSkeletonGrid
+            : null
+        }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={activeTab === 'saved' && USER_POSTS.length === 0 ? { flex: 1 } : null}
+        contentContainerStyle={
+          (activeTab === 'saved' && USER_POSTS.length === 0) || isLoading
+            ? { flexGrow: 1 }
+            : null
+        }
       />
 
-      <ProfileEditModal 
+      <ProfileEditModal
         isVisible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
-        userData={[]}
+        data={user}
       />
     </View>
   );
@@ -182,6 +213,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+    backgroundColor: '#f0f0f0',
   },
   editProfileButton: {
     position: 'absolute',
@@ -212,12 +244,13 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     width: '100%',
     marginBottom: 20,
   },
   statItem: {
     alignItems: 'center',
+    marginHorizontal: 20,
   },
   statNumber: {
     fontSize: 18,
@@ -257,9 +290,6 @@ const styles = StyleSheet.create({
   activeTab: {
     borderBottomColor: '#5271FF',
   },
-  postsGrid: {
-    width: '100%',
-  },
   postItem: {
     width: ITEM_WIDTH,
     height: ITEM_WIDTH,
@@ -268,6 +298,16 @@ const styles = StyleSheet.create({
   postImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 4,
+  },
+  skeletonPost: {
+    backgroundColor: '#f0f0f0',
+  },
+  skeletonImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
   },
   emptyStateContainer: {
     alignItems: 'center',

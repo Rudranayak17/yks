@@ -19,6 +19,8 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLoginMutation } from '@/store/api/auth';
 import { showToast } from '@/utils/ShowToast';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '@/store/reducer/auth';
 
 const loginSchema = yup.object().shape({
   email: yup
@@ -38,6 +40,7 @@ type LoginFormData = {
 
 export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
+  const dispatch=useDispatch()
   const [isLoading, setIsLoading] = useState(false);
   const [login] = useLoginMutation();
   const router = useRouter();
@@ -65,11 +68,25 @@ export default function LoginScreen() {
           message: resp.message,
           backgroundColor: 'green',
         });
+        dispatch(setCredentials({
+          token:resp.token, message:resp.message ,user:resp.user
+        }))
+
         resp.user.role === 'admin' && router.navigate('/(tabs)/admin');
       }
       console.log(resp);
-    } catch (error) {
-      console.error(error);
+    } catch (error:any) {
+      if (error.data.success===false) {
+        showToast({
+          message:error.data.message,
+          backgroundColor: 'red',
+        });
+        return
+      }
+      showToast({
+        message:"something went wrong",
+        backgroundColor: 'red',
+      });
     } finally {
       setIsLoading(false);
     }

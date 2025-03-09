@@ -23,6 +23,7 @@ const initialState: any = {
   token: null,
   message: null,
   isLoading: true,
+  user:null,
   isAuthenticated: false,
 };
 
@@ -31,9 +32,10 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action: PayloadAction<any>) => {
-      const { token, message } = action.payload;
+      const { token, message ,user} = action.payload;
       state.token = token;
       state.message = message || '';
+      state.user = user;
       state.isAuthenticated = true;
       state.isLoading = false;
       // Call async function separately to handle promise
@@ -42,9 +44,21 @@ const authSlice = createSlice({
         // Handle error state or logging as needed
       });
     },
+
+    setProfile: (state, action: PayloadAction<any>) => {
+      const { token, message ,user} = action.payload;
+
+      state.message = message || '';
+      state.user = user;
+      state.isAuthenticated = true;
+      state.isLoading = false;
+
+    },
+
     logout: (state) => {
       state.token = null;
       state.message = 'Logged out successfully';
+      state.user=null
       state.isAuthenticated = false;
       state.isLoading = false;
       // Call async function separately to handle promise
@@ -56,15 +70,18 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.token = null;
       state.message = 'Error occurred while authentication';
+      state.user=null,
       state.isAuthenticated = false;
       state.isLoading = false;
     },
   },
 });
 
-export const { setCredentials, logout, clearError } = authSlice.actions;
+export const { setCredentials, logout, clearError,setProfile } = authSlice.actions;
 export const selectCurrentMessage = (state: { auth: any }) =>
   state.auth.message;
+export const selectCurrentUser = (state: { auth: any }) =>
+  state.auth.user;
 export const selectCurrentToken = (state: { auth: any }) => state.auth.token;
 export const selectCurrentLoading = (state: { auth: any }) =>
   state.auth.isLoading;

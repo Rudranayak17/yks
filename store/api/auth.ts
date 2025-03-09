@@ -49,6 +49,29 @@ export const authApiSlice = apiWithTag.injectEndpoints({
         body: credential,
       }),
     }),
+    get_profile: builder.query({
+      query: (credential) => ({
+        url: "/api/v1/user/profile",
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+     
+      }),
+      keepUnusedDataFor:0,
+      providesTags:["user"]
+    }),
+    update_profile: builder.mutation({
+      query: (credential) => ({
+        url: "/api/v1/user/profile",
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: credential,
+      }),
+    }),
+
   }),
   overrideExisting: true,
 });
@@ -58,4 +81,6 @@ export const {
   useRegistrationMutation,
   useForgetPasswordMutation,
   useResetpasswordMutation,
+  useGet_profileQuery,
+  useUpdate_profileMutation
 } = authApiSlice;

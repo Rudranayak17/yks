@@ -15,6 +15,12 @@ export default function ChatLayout() {
           headerBackVisible: false,
         }}
       />
+     <Stack.Screen
+        name="AddSociety"
+        options={{
+          headerBackVisible: false,
+        }}
+      />
 
       <Stack.Screen
         name="chat"

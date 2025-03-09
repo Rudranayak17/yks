@@ -7,28 +7,31 @@ import { Camera, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-
+import { useCreate_postMutation } from '@/store/api/post';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/utils/config';
 
 const postSchema = yup.object().shape({
-  caption: yup.string().required('Caption is required'),
-  location: yup.string(),
+  title: yup.string().required('Title is required'),
+  description: yup.string(),
 });
 
 type PostFormData = {
-  caption: string;
-  location: string;
+  title: string;
+  description: string;
 };
 
 export default function CreatePostScreen() {
-
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [create_post] = useCreate_postMutation();
 
   const { control, handleSubmit, formState: { errors }, reset } = useForm<PostFormData>({
     resolver: yupResolver(postSchema),
     defaultValues: {
-      caption: '',
-      location: '',
+      title: '',
+      description: '',
     },
   });
 
@@ -49,6 +52,25 @@ export default function CreatePostScreen() {
     setImage(null);
   };
 
+  const uploadImageToFirebase = async (imageUri: string) => {
+    try {
+      setIsUploading(true);
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const fileName = `posts/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+      const storageRef = ref(storage, fileName);
+      
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      throw new Error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const onSubmit = async (data: PostFormData) => {
     if (!image) {
       alert('Please select an image');
@@ -57,15 +79,23 @@ export default function CreatePostScreen() {
 
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Reset form and navigate to home
+      const imageUrl = await uploadImageToFirebase(image);
+
+      const postData = {
+        imageUrl: imageUrl,
+        title: data.title,
+        description: data.description || ''
+      };
+
+      await create_post(postData).unwrap();
+
       reset();
       setImage(null);
       router.replace('/(tabs)');
     } catch (error) {
-      console.error(error);
+      console.error('Post creation error:', error);
+      alert('Failed to create post');
     } finally {
       setIsLoading(false);
     }
@@ -82,12 +112,20 @@ export default function CreatePostScreen() {
           {image ? (
             <View style={styles.selectedImageContainer}>
               <Image source={{ uri: image }} style={styles.selectedImage} />
-              <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
+              <TouchableOpacity 
+                style={styles.removeImageButton} 
+                onPress={removeImage}
+                disabled={isLoading || isUploading}
+              >
                 <X size={20} color="#fff" />
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+            <TouchableOpacity 
+              style={styles.imagePicker} 
+              onPress={pickImage}
+              disabled={isLoading || isUploading}
+            >
               <Camera size={40} color="#5271FF" />
               <Text style={styles.imagePickerText}>Select Image</Text>
             </TouchableOpacity>
@@ -97,52 +135,67 @@ export default function CreatePostScreen() {
         <View style={styles.formContainer}>
           <Controller
             control={control}
-            name="caption"
+            name="title"
             render={({ field: { onChange, value, onBlur } }) => (
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Caption</Text>
+                <Text style={styles.inputLabel}>Title</Text>
                 <TextInput
                   style={styles.textArea}
-                  placeholder="Write a caption..."
+                  placeholder="Write a title..."
                   multiline
                   numberOfLines={4}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  editable={!isLoading && !isUploading}
                 />
-                {errors.caption && <Text style={styles.errorText}>{errors.caption.message}</Text>}
+                {errors.title && <Text style={styles.errorText}>{errors.title.message}</Text>}
               </View>
             )}
           />
 
           <Controller
             control={control}
-            name="location"
+            name="description"
             render={({ field: { onChange, value, onBlur } }) => (
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Location (optional)</Text>
+                <Text style={styles.inputLabel}>Description (optional)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Add location"
+                  placeholder="Add description"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  editable={!isLoading && !isUploading}
                 />
               </View>
             )}
           />
 
           <TouchableOpacity
-            style={[styles.button, (!image || isLoading) && styles.buttonDisabled]}
+            style={[
+              styles.button, 
+              (!image || isLoading || isUploading) && styles.buttonDisabled
+            ]}
             onPress={handleSubmit(onSubmit)}
-            disabled={!image || isLoading}
+            disabled={!image || isLoading || isUploading}
           >
-            {isLoading ? (
+            {isUploading ? (
+              <ActivityIndicator color="#fff" />
+            ) : isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.buttonText}>Share Post</Text>
             )}
           </TouchableOpacity>
+
+          {(isUploading || isLoading) && (
+            <View style={styles.loadingOverlay}>
+              <Text style={styles.loadingText}>
+                {isUploading ? 'Uploading Image...' : 'Creating Post...'}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -255,5 +308,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Poppins-Medium',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 5,
   },
 });

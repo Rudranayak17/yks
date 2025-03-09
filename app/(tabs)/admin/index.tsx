@@ -1,92 +1,28 @@
-import { StyleSheet, Text, View, StatusBar, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
 import React from 'react';
 import { FlashList } from '@shopify/flash-list';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router'; // Updated to use useRouter and useLocalSearchParams
-
-// Sample data with address instead of units
-const societyData = [
-  { 
-    id: '1', 
-    name: 'Sunrise Society', 
-    owner: 'John Doe', 
-    phone: '555-0101',
-    address: '123 Morning Avenue, Sunnyville',
-    rating: 4.5 
-  },
-  { 
-    id: '2', 
-    name: 'Moonlight Residency', 
-    owner: 'Jane Smith', 
-    phone: '555-0102',
-    address: '456 Evening Street, Moontown',
-    rating: 4.2
-  },
-  { 
-    id: '3', 
-    name: 'Starview Apartments', 
-    owner: 'Mike Johnson', 
-    phone: '555-0103',
-    address: '789 Galaxy Road, Starfield',
-    rating: 4.8
-  },
-  { 
-    id: '4', 
-    name: 'Green Valley', 
-    owner: 'Sarah Williams', 
-    phone: '555-0104',
-    address: '101 Forest Lane, Greenfield',
-    rating: 4.0
-  },
-  { 
-    id: '5', 
-    name: 'Blue Horizon', 
-    owner: 'Robert Brown', 
-    phone: '555-0105',
-    address: '202 Ocean View Drive, Coastville',
-    rating: 4.7
-  },
-];
+import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useGet_societyQuery } from '@/store/api/society';
 
 const SocietyList = () => {
-  // Using useRouter from expo-router
   const router = useRouter();
-  
-  // Using useLocalSearchParams to get parameters
   const params = useLocalSearchParams();
-  
-  // Function to render stars based on rating
-  const renderRatingStars = (rating) => {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    
-    return (
-      <View style={styles.ratingContainer}>
-        {[...Array(5)].map((_, i) => (
-          <Ionicons
-            key={i}
-            name={
-              i < fullStars 
-                ? 'star' 
-                : i === fullStars && halfStar 
-                  ? 'star-half' 
-                  : 'star-outline'
-            }
-            size={16}
-            color="#FFD700"
-            style={styles.starIcon}
-          />
-        ))}
-        <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
-      </View>
-    );
-  };
+
+  // Fetch society data using the query hook
+  const { data, isLoading, error } = useGet_societyQuery({});
 
   // Navigate to society details
   const navigateToDetails = (society) => {
     router.push({
-      pathname: "/(tabs)/admin/[id]",
-      params: { id: society.id, name: society.name }
+      pathname: '/(tabs)/admin/[id]',
+      params: { id: society._id, name: society.name },
     });
   };
 
@@ -95,34 +31,41 @@ const SocietyList = () => {
     <View style={styles.itemContainer}>
       <View style={styles.itemHeader}>
         <View style={styles.societyInitial}>
-          <Text style={styles.initialText}>{item.name.charAt(0)}</Text>
+          <Text style={styles.initialText}>
+            {item.name ? item.name.charAt(0) : 'N/A'}
+          </Text>
         </View>
         <View style={styles.headerRight}>
-          <Text style={styles.societyName}>{item.name}</Text>
-          {renderRatingStars(item.rating)}
+          <Text style={styles.societyName}>{item.name || 'Unnamed Society'}</Text>
         </View>
       </View>
-      
+
       <View style={styles.divider} />
-      
+
       <View style={styles.itemContent}>
         <View style={styles.detailRow}>
           <Ionicons name="person" size={18} color="#5C6BC0" />
-          <Text style={styles.detailText}>Owner: <Text style={styles.detailValue}>{item.owner}</Text></Text>
+          <Text style={styles.detailText}>
+            Owner: <Text style={styles.detailValue}>{item.ownerName || 'N/A'}</Text>
+          </Text>
         </View>
-        
+
         <View style={styles.detailRow}>
           <Ionicons name="call" size={18} color="#5C6BC0" />
-          <Text style={styles.detailText}>Phone: <Text style={styles.detailValue}>{item.phone}</Text></Text>
+          <Text style={styles.detailText}>
+            Phone: <Text style={styles.detailValue}>{item.phoneNumber || 'N/A'}</Text>
+          </Text>
         </View>
-        
+
         <View style={styles.detailRow}>
           <Ionicons name="location" size={18} color="#5C6BC0" />
-          <Text style={styles.detailText}>Address: <Text style={styles.detailValue}>{item.address}</Text></Text>
+          <Text style={styles.detailText}>
+            Address: <Text style={styles.detailValue}>{item.address || 'N/A'}</Text>
+          </Text>
         </View>
       </View>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.cardFooter}
         onPress={() => navigateToDetails(item)}
       >
@@ -134,45 +77,73 @@ const SocietyList = () => {
     </View>
   );
 
-  // Go back function
-  const goBack = () => {
-    router.back();
-  };
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>
+          Error: {error.message || 'Failed to load societies'}
+        </Text>
+      </View>
+    );
+  }
+
+  // Extract society data from API response with a fallback
+  const societyData = data?.data || [];
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#3F51B5" />
-      
-      {/* Header with back button */}
+
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-
-          <Text style={styles.headerTitle}>{params.title || "Societies"}</Text>
+          <Text style={styles.headerTitle}>{params.title || 'Societies'}</Text>
           <View style={styles.rightPlaceholder} />
         </View>
       </View>
-      
+
       {/* Subtitle */}
       <View style={styles.subtitleContainer}>
         <Text style={styles.subtitle}>Featured Societies</Text>
         <Text style={styles.subtitleCount}>{societyData.length} listings</Text>
       </View>
-      
-      {/* FlashList */}
+
+      {/* FlashList with real data */}
       <FlashList
         data={societyData}
         renderItem={renderItem}
         estimatedItemSize={150}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id || Math.random().toString()} // Fallback for key
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
+
+      {/* Add Society Button */}
+      <TouchableOpacity style={styles.addButtonContainer} onPress={() => router.navigate('/(admin)/AddSociety')}>
+        <AntDesign
+          name="pluscircle"
+          size={60}
+          color="#3F51B5"
+          style={styles.addButton}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
 
 export default SocietyList;
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -189,9 +160,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-  },
-  backButton: {
-    padding: 5,
   },
   headerTitle: {
     color: '#FFF',
@@ -260,18 +228,6 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starIcon: {
-    marginRight: 2,
-  },
-  ratingText: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: '#666',
-  },
   divider: {
     height: 1,
     backgroundColor: '#E0E0E0',
@@ -310,5 +266,32 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '500',
     fontSize: 16,
+  },
+  addButton: {
+    position: 'absolute',
+    bottom: 5,
+    right: 15,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  addButtonContainer: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    width: 80,  // Wider than the icon
+    height: 80, // Taller than the icon
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#D32F2F',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
